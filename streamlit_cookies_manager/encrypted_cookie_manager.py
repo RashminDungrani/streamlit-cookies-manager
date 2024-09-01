@@ -20,17 +20,18 @@ def key_from_parameters(salt: bytes, iterations: int, password: str):
         iterations=iterations,
     )
 
-    return base64.urlsafe_b64encode(kdf.derive(password.encode('utf-8')))
+    return base64.urlsafe_b64encode(kdf.derive(password.encode("utf-8")))
 
 
 class EncryptedCookieManager(MutableMapping[str, str]):
     def __init__(
-            self, *,
-            password: str,
-            path: str = None,
-            prefix: str = "",
-            key_params_cookie="EncryptedCookieManager.key_params",
-            ignore_broken=True,
+        self,
+        *,
+        password: str,
+        path: str = None,
+        prefix: str = "",
+        key_params_cookie="EncryptedCookieManager.key_params",
+        ignore_broken=True,
     ):
         self._cookie_manager = CookieManager(path=path, prefix=prefix)
         self._fernet: Optional[Fernet] = None
@@ -60,9 +61,7 @@ class EncryptedCookieManager(MutableMapping[str, str]):
             key_params = self._initialize_new_key_params()
         salt, iterations, magic = key_params
         key = key_from_parameters(
-            salt=salt,
-            iterations=iterations,
-            password=self._password
+            salt=salt, iterations=iterations, password=self._password
         )
 
         self._fernet = Fernet(key)
@@ -86,21 +85,25 @@ class EncryptedCookieManager(MutableMapping[str, str]):
         salt = os.urandom(16)
         iterations = 390000
         magic = os.urandom(16)
-        self._cookie_manager[self._key_params_cookie] = b':'.join([
-            base64.b64encode(salt),
-            str(iterations).encode('ascii'),
-            base64.b64encode(magic)
-        ]).decode('ascii')
+        self._cookie_manager[self._key_params_cookie] = b":".join(
+            [
+                base64.b64encode(salt),
+                str(iterations).encode("ascii"),
+                base64.b64encode(magic),
+            ]
+        ).decode("ascii")
         return salt, iterations, magic
 
     def __repr__(self):
         if self.ready():
-            return f'<EncryptedCookieManager: {dict(self)!r}>'
-        return '<EncryptedCookieManager: not ready>'
+            return f"<EncryptedCookieManager: {dict(self)!r}>"
+        return "<EncryptedCookieManager: not ready>"
 
     def __getitem__(self, k: str) -> str:
         try:
-            return self._decrypt(self._cookie_manager[k].encode('utf-8')).decode('utf-8')
+            return self._decrypt(self._cookie_manager[k].encode("utf-8")).decode(
+                "utf-8"
+            )
         except fernet.InvalidToken:
             if self._ignore_broken:
                 return
@@ -113,7 +116,7 @@ class EncryptedCookieManager(MutableMapping[str, str]):
         return len(self._cookie_manager)
 
     def __setitem__(self, key: str, value: str) -> None:
-        self._cookie_manager[key] = self._encrypt(value.encode('utf-8')).decode('utf-8')
+        self._cookie_manager[key] = self._encrypt(value.encode("utf-8")).decode("utf-8")
 
     def __delitem__(self, key: str) -> None:
         del self._cookie_manager[key]
