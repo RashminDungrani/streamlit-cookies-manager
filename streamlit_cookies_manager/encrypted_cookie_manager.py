@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from streamlit_cookies_manager import CookieManager
 
 
-@st.cache
+@st.cache_data
 def key_from_parameters(salt: bytes, iterations: int, password: str):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
@@ -72,8 +72,12 @@ class EncryptedCookieManager(MutableMapping[str, str]):
         if not raw_key_params:
             return
         try:
-            raw_salt, raw_iterations, raw_magic = raw_key_params.split(':')
-            return base64.b64decode(raw_salt), int(raw_iterations), base64.b64decode(raw_magic)
+            raw_salt, raw_iterations, raw_magic = raw_key_params.split(":")
+            return (
+                base64.b64decode(raw_salt),
+                int(raw_iterations),
+                base64.b64decode(raw_magic),
+            )
         except (ValueError, TypeError):
             print(f"Failed to parse key parameters from cookie {raw_key_params}")
             return
